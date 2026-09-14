@@ -5,7 +5,7 @@ const users = [
         lastName: "Bennani",
         email: "nadia.bennani@example.com",
         phone: "+212600000001",
-        password: "Nadia123!",
+        password: "password",
         balance: 12500.5,
         points: 840,
         createdAt: "2026-01-15T09:30:00Z"
@@ -43,8 +43,8 @@ const currentUser = null;
 const offers = [
     {
         id: "OFF-001",
-        title: "Credit Projet",
-        description: "Financez un projet personnel avec des mensualites adaptees.",
+        title: "Personal project credit",
+        description: "Finance a personal project with flexible monthly payments.",
         type: "personal",
         amount: 50000,
         interestRate: 5.9,
@@ -53,8 +53,8 @@ const offers = [
     },
     {
         id: "OFF-002",
-        title: "Credit Auto",
-        description: "Une solution de financement pour acheter une voiture neuve ou d'occasion.",
+        title: "Auto credit",
+        description: "A financing solution for a new or used car.",
         type: "auto",
         amount: 120000,
         interestRate: 4.75,
@@ -63,8 +63,8 @@ const offers = [
     },
     {
         id: "OFF-003",
-        title: "Credit Travaux",
-        description: "Realisez vos travaux de renovation avec un financement flexible.",
+        title: "Home improvement credit",
+        description: "Complete your renovation with flexible financing.",
         type: "home",
         amount: 80000,
         interestRate: 6.2,
@@ -90,10 +90,11 @@ const creditSimulations = [
         userId: "USR-001",
         offerId: "OFF-001",
         amount: 30000,
-        interestRate: 5.9,
+        annualRate: 5.9,
         duration: 48,
         monthlyPayment: 702.4,
-        totalPayment: 33715.2,
+        totalCost: 33715.2,
+        totalInterest: 3715.2,
         createdAt: "2026-09-01T10:20:00Z",
         status: "draft"
     },
@@ -102,43 +103,37 @@ const creditSimulations = [
         userId: "USR-002",
         offerId: "OFF-002",
         amount: 90000,
-        interestRate: 4.75,
+        annualRate: 4.75,
         duration: 60,
         monthlyPayment: 1686.15,
-        totalPayment: 101169,
+        totalCost: 101169,
+        totalInterest: 11169,
         createdAt: "2026-09-03T16:05:00Z",
         status: "submitted"
     }
 ];
 
-
-
-
-
-
-
-
 const rewards = [
     {
         id: "RWD-001",
-        title: "Bon d'achat 50 DH",
-        description: "Un bon d'achat utilisable chez un partenaire SmartBank.",
+        title: "50 DH shopping voucher",
+        description: "A voucher to use with a SmartBank partner.",
         pointsCost: 500,
         category: "shopping",
         active: true
     },
     {
         id: "RWD-002",
-        title: "Frais de transfert offerts",
-        description: "Un transfert national sans frais.",
+        title: "Fee-free transfer",
+        description: "One national transfer with no fee.",
         pointsCost: 300,
         category: "banking",
         active: true
     },
     {
         id: "RWD-003",
-        title: "Bonus de bienvenue",
-        description: "Une ancienne recompense qui n'est plus disponible.",
+        title: "Welcome bonus",
+        description: "A previous reward that is no longer available.",
         pointsCost: 1000,
         category: "bonus",
         active: false
@@ -146,16 +141,11 @@ const rewards = [
 ];
 
 
-
-
-
-
-
 const flashSales = [
     {
         id: "SALE-001",
-        title: "Week-end partenaire",
-        description: "Profitez d'une reduction sur une selection de produits.",
+        title: "Partner weekend",
+        description: "Enjoy a discount on a selection of products.",
         partner: "Maroc Market",
         discount: 15,
         originalPrice: 1200,
@@ -166,8 +156,8 @@ const flashSales = [
     },
     {
         id: "SALE-002",
-        title: "Reduction epargne",
-        description: "Profitez de 10% de reduction sur les frais d'epargne.",
+        title: "Savings discount",
+        description: "Get 10% off savings fees.",
         partner: "SmartBank",
         discount: 10,
         originalPrice: 500,
@@ -186,66 +176,29 @@ const flashSales = [
 
 
 
-const transactions = [
-    {
-        id: "TXN-001",
-        userId: "USR-001",
-        type: "deposit",
-        amount: 2500,
-        description: "Virement recu",
-        status: "completed",
-        createdAt: "2026-09-04T08:45:00Z"
-    },
-    {
-        id: "TXN-002",
-        userId: "USR-001",
-        type: "payment",
-        amount: -185.5,
-        description: "Paiement facture internet",
-        status: "completed",
-        createdAt: "2026-09-05T19:15:00Z"
-    },
-    {
-        id: "TXN-003",
-        userId: "USR-002",
-        type: "transfer",
-        amount: -600,
-        description: "Transfert vers un beneficiaire",
-        status: "pending",
-        createdAt: "2026-09-06T12:00:00Z"
-    }
-];
-
-
-
-
-
-
-
 const history = [
     {
         id: "HIS-001",
         userId: "USR-001",
         action: "login",
-        description: "Connexion reussie",
+        description: "Successful login",
         createdAt: "2026-09-06T09:00:00Z"
     },
     {
         id: "HIS-002",
         userId: "USR-001",
         action: "simulation_created",
-        description: "Simulation de credit creee",
+        description: "Credit simulation created",
         createdAt: "2026-09-06T09:12:00Z"
     },
     {
         id: "HIS-003",
         userId: "USR-002",
         action: "profile_updated",
-        description: "Numero de telephone modifie",
+        description: "Phone number updated",
         createdAt: "2026-09-06T15:30:00Z"
     }
 ];
-
 
 const initialData = {
     users,
@@ -254,7 +207,6 @@ const initialData = {
     creditSimulations,
     rewards,
     flashSales,
-    transactions,
     history
 };
 
@@ -265,7 +217,6 @@ export {
     creditSimulations,
     rewards,
     flashSales,
-    transactions,
     history,
     initialData
 };

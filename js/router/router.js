@@ -1,45 +1,53 @@
 import { get } from "../storage/storage.js";
 import { logoutUser, getCurrentUser } from "../services/userService.js";
 import { addHistory } from "../services/historyService.js";
+
 import { renderLoginPage } from "../pages/login.js";
 import { renderRegisterPage } from "../pages/register.js";
 import { renderForgotPasswordPage } from "../pages/forgotPassword.js";
+import { renderDashboardPage } from "../pages/dashboard.js";
+import { renderOffersPage } from "../pages/offers.js";
+import { renderCreditPage } from "../pages/credit.js";
+import { renderRewardsPage } from "../pages/rewards.js";
+import { renderFlashSalesPage } from "../pages/flashSales.js";
+import { renderProfilePage } from "../pages/profile.js";
+import { renderHistoryPage } from "../pages/history.js";
+import { renderNavbar } from "../components/navbar.js";
 
 const BASE_PATH = "/smart-bank";
 
-const pageTitles = {
-    "/login": "Connexion",
-    "/register": "Inscription",
-    "/forgot-password": "Mot de passe oublie",
-    "/dashboard": "Tableau de bord",
-    "/offers": "Offres",
-    "/credit": "Simulation de credit",
-    "/rewards": "Recompenses",
-    "/flash-sales": "Offres flash",
-    "/profile": "Profil",
-    "/history": "Historique"
+const publicPages = {
+    "/login": renderLoginPage,
+    "/register": renderRegisterPage,
+    "/forgot-password": renderForgotPasswordPage
 };
 
+const protectedPages = {
+    "/dashboard": renderDashboardPage,
+    "/offers": renderOffersPage,
+    "/credit": renderCreditPage,
+    "/rewards": renderRewardsPage,
+    "/flash-sales": renderFlashSalesPage,
+    "/profile": renderProfilePage,
+    "/history": renderHistoryPage
+};
+
+const navigationLinks = Object.keys(protectedPages).map(function (path) {
+    return {
+        path: path,
+        label: path.slice(1)
+    };
+});
+
 function getAppElement() {
-    return document.getElementById("app");
+    return document.getElementById("root");
 }
 
 function renderPage(path) {
     const appElement = getAppElement();
-    if (path === "/login") {
-        renderLoginPage(appElement);
-        connectNavigationLinks();
-        return;
-    }
 
-    if (path === "/register") {
-        renderRegisterPage(appElement);
-        connectNavigationLinks();
-        return;
-    }
-
-    if (path === "/forgot-password") {
-        renderForgotPasswordPage(appElement);
+    if (publicPages[path]) {
+        publicPages[path](appElement);
         connectNavigationLinks();
         return;
     }
@@ -49,33 +57,35 @@ function renderPage(path) {
 
 function renderProtectedPage(path) {
     const appElement = getAppElement();
-    let navigationLinks = "";
+    const currentUser = get("currentUser");
 
-    for (const pagePath in pageTitles) {
-        if (pagePath !== "/login" && pagePath !== "/register" && pagePath !== "/forgot-password") {
-            navigationLinks += `<a href="${pagePath}" data-route>${pageTitles[pagePath]}</a>`;
-        }
-    }
+    const navbar = renderNavbar({
+        isAuthenticated: true,
+        currentPath: path,
+        userName: currentUser.firstName + " " + currentUser.lastName,
+        links: navigationLinks
+    });
 
     appElement.innerHTML = `
         <main class="protected-page">
-            <nav>${navigationLinks}</nav>
-            <section class="protected-card">
-                <p class="eyebrow">SmartBank</p>
-                <h1>${pageTitles[path] || "Page"}</h1>
-                <p>This page will be connected to its service next.</p>
-                <button class="primary-button" id="logout-button" type="button">Logout</button>
-            </section>
+            ${navbar}
+            <section class="protected-card page-content"></section>
         </main>
     `;
+
+    const renderFunction = protectedPages[path];
+
+    if (renderFunction) {
+        renderFunction();
+    }
 
     const logoutButton = document.getElementById("logout-button");
 
     logoutButton.addEventListener("click", function () {
-        const currentUser = getCurrentUser();
+        const user = getCurrentUser();
 
-        if (currentUser !== null) {
-            addHistory(currentUser.id, "logout", "Deconnexion");
+        if (user !== null) {
+            addHistory(user.id, "logout", "Logged out");
         }
 
         logoutUser();
@@ -91,40 +101,37 @@ function connectNavigationLinks() {
     for (let index = 0; index < links.length; index += 1) {
         links[index].addEventListener("click", function (event) {
             event.preventDefault();
-            navigateTo(links[index].getAttribute("href"));
+
+            const path = links[index].getAttribute("href");
+            navigateTo(path);
         });
     }
 }
 
 function navigateTo(path) {
-    const fullPath = BASE_PATH + path;
-    window.history.pushState({}, "", fullPath);
+    window.history.replaceState({}, "", BASE_PATH + path);
     router();
 }
 
 function router() {
     let path = window.location.pathname;
-    if (path.startsWith(BASE_PATH)) {
-        path = path.replace(BASE_PATH, "");
-    }
-    path = path || "/";
+
+    path = path.replace(BASE_PATH, "") || "/";
 
     const currentUser = get("currentUser");
 
     if (path === "/") {
         if (currentUser === null) {
-            window.history.replaceState({}, "", BASE_PATH + "/login");
+            navigateTo("/login");
         } else {
-            window.history.replaceState({}, "", BASE_PATH + "/dashboard");
+            navigateTo("/dashboard");
         }
-        router();
         return;
     }
 
-    if (path === "/login" || path === "/register" || path === "/forgot-password") {
+    if (publicPages[path]) {
         if (currentUser !== null && path !== "/forgot-password") {
-            window.history.replaceState({}, "", BASE_PATH + "/dashboard");
-            router();
+            navigateTo("/dashboard");
             return;
         }
 
@@ -133,32 +140,18 @@ function router() {
     }
 
     if (currentUser === null) {
-        window.history.replaceState({}, "", BASE_PATH + "/login");
-        router();
+        navigateTo("/login");
         return;
     }
 
-    const protectedRoutes = [
-        "/dashboard",
-        "/offers",
-        "/credit",
-        "/rewards",
-        "/flash-sales",
-        "/profile",
-        "/history"
-    ];
-
-    if (protectedRoutes.includes(path)) {
+    if (protectedPages[path]) {
         renderPage(path);
         return;
     }
 
-    window.history.replaceState({}, "", BASE_PATH + "/dashboard");
-    renderPage("/dashboard");
+    navigateTo("/dashboard");
 }
 
-window.addEventListener("popstate", function () {
-    router();
-});
+window.addEventListener("popstate", router);
 
 export { navigateTo, router };

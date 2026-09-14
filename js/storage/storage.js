@@ -21,8 +21,4 @@ function remove(key) {
 }
 
 
-function clear() {
-    localStorage.clear();
-}
-
-export { save, get, remove, clear };
+export { save, get, remove };

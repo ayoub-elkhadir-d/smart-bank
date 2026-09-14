@@ -1,18 +1,14 @@
 import { save, get, remove } from "../storage/storage.js";
 
-
 function registerUser(userData) {
-    
     const users = get("users") || [];
 
-    
     for (let index = 0; index < users.length; index += 1) {
         if (users[index].email.toLowerCase() === userData.email.toLowerCase()) {
             return null;
         }
     }
 
-    
     const newUser = {
         id: "USR-" + Date.now(),
         firstName: userData.firstName,
@@ -25,35 +21,26 @@ function registerUser(userData) {
         createdAt: new Date().toISOString()
     };
 
-    
     users.push(newUser);
-
-    
     save("users", users);
 
-    
     return newUser;
 }
 
-
 function loginUser(email, password) {
-    
     const users = get("users") || [];
 
-    
     for (let index = 0; index < users.length; index += 1) {
         const user = users[index];
+        const emailMatches = user.email.toLowerCase() === email.toLowerCase();
+        const passwordMatches = user.password === password;
 
-        if (user.email.toLowerCase() === email.toLowerCase() && user.password === password) {
-            
+        if (emailMatches && passwordMatches) {
             save("currentUser", user);
-
-            
             return user;
         }
     }
 
-    
     return null;
 }
 
@@ -133,15 +120,16 @@ function updateUser(userId, userData) {
 
 
 function changePassword(userId, oldPassword, newPassword) {
-    
     const user = getUserById(userId);
 
-    
-    if (user === null || user.password !== oldPassword) {
+    if (user === null) {
         return false;
     }
 
-    
+    if (user.password !== oldPassword) {
+        return false;
+    }
+
     const users = get("users") || [];
 
     for (let index = 0; index < users.length; index += 1) {
@@ -149,7 +137,6 @@ function changePassword(userId, oldPassword, newPassword) {
             users[index].password = newPassword;
             save("users", users);
 
-            
             const currentUser = get("currentUser");
 
             if (currentUser !== null && currentUser.id === userId) {
@@ -161,7 +148,6 @@ function changePassword(userId, oldPassword, newPassword) {
         }
     }
 
-    
     return false;
 }
 

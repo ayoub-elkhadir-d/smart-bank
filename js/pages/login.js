@@ -1,38 +1,40 @@
 import { loginUser } from "../services/userService.js";
 import { addHistory } from "../services/historyService.js";
-import { validateLoginForm } from "../validation/validation.js";
+import { validateEmail, validateLoginForm, validateRequired } from "../validation/validation.js";
 import { navigateTo } from "../router/router.js";
-const event = new Event("")
+import { renderNavbar } from "../components/navbar.js";
+import { showErrorMessage } from "../components/message.js";
 
 function renderLoginPage(appElement) {
-    let main = document.createElement('main');
-    main.className = "auth-page"
-    appElement.appendChild(main)
-
-    main.innerHTML = `
+    appElement.innerHTML = `
+        <main class="auth-page">
+            ${renderNavbar({ isAuthenticated: false, currentPath: "/login" })}
             <section class="auth-card">
-                <a class="brand" href="/login" data-route>SmartBank</a>
                 <p class="eyebrow">Secure banking made simple</p>
-                <h1>Welcome Back</h1>
+                <h1>Welcome back</h1>
                 <p class="intro">Sign in to manage your money with confidence.</p>
                 <form id="login-form" novalidate>
                     <label for="login-email">Email</label>
                     <input id="login-email" name="email" type="email" autocomplete="email" required>
+                    <p class="field-message error" id="login-email-error"></p>
                     <label for="login-password">Password</label>
                     <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+                    <p class="field-message error" id="login-password-error"></p>
                     <p class="form-message error" id="login-message"></p>
+                    <div id="login-action-message" aria-live="polite"></div>
                     <button class="primary-button" type="submit">Login</button>
                 </form>
                 <a class="text-link" href="/forgot-password" data-route>Forgot password?</a>
                 <p class="form-footer">Don't have an account? <a href="/register" data-route>Create an account</a></p>
             </section>
-       
+        </main>
     `;
 
     const loginForm = document.getElementById("login-form");
     const loginMessage = document.getElementById("login-message");
+    const loginActionMessage = document.getElementById("login-action-message");
 
-    loginForm.addEventListener("submit", function (event) {
+    loginForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
         const formData = {
@@ -40,19 +42,30 @@ function renderLoginPage(appElement) {
             password: document.getElementById("login-password").value
         };
 
+        document.getElementById("login-email-error").textContent = "";
+        document.getElementById("login-password-error").textContent = "";
+        loginMessage.textContent = "";
+
+        if (validateEmail(formData.email) === false) {
+            document.getElementById("login-email-error").textContent = "Enter a valid email address.";
+        }
+
+        if (validateRequired(formData.password) === false) {
+            document.getElementById("login-password-error").textContent = "Enter your password.";
+        }
+
         if (validateLoginForm(formData) === false) {
-            loginMessage.textContent = "Please enter a valid email and password.";
             return;
         }
 
-        const user = loginUser(formData.email, formData.password);
+        const user = await loginUser(formData.email, formData.password);
 
         if (user === null) {
-            loginMessage.textContent = "Email or password is incorrect.";
+            showErrorMessage(loginActionMessage, "Email or password is incorrect.");
             return;
         }
 
-        addHistory(user.id, "login", "Connexion reussie");
+        addHistory(user.id, "login", "Successful login");
         navigateTo("/dashboard");
     });
 }

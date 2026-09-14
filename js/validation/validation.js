@@ -53,8 +53,12 @@ function validatePhone(phone) {
     }
 
     
-    const phoneWithoutSpaces = phone.replace(/[\s-]/g, "");
-    const phoneWithoutPlus = phoneWithoutSpaces.replace("+", "");
+    const phoneWithoutFormatting = phone.replace(/[\s()\-]/g, "");
+    let phoneWithoutPlus = phoneWithoutFormatting;
+
+    if (phoneWithoutPlus.startsWith("+")) {
+        phoneWithoutPlus = phoneWithoutPlus.slice(1);
+    }
 
     
     if (phoneWithoutPlus === "" || /^\d+$/.test(phoneWithoutPlus) === false) {
