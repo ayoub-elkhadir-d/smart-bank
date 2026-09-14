@@ -32,12 +32,36 @@ const protectedPages = {
     "/history": renderHistoryPage
 };
 
-const navigationLinks = Object.keys(protectedPages).map(function (path) {
-    return {
-        path: path,
-        label: path.slice(1)
-    };
-});
+const navigationLinks = [
+    {
+        path: "/dashboard",
+        label: "Dashboard"
+    },
+    {
+        path: "/offers",
+        label: "Offers"
+    },
+    {
+        path: "/credit",
+        label: "Credit simulation"
+    },
+    {
+        path: "/rewards",
+        label: "Rewards"
+    },
+    {
+        path: "/flash-sales",
+        label: "Flash offers"
+    },
+    {
+        path: "/profile",
+        label: "Profile"
+    },
+    {
+        path: "/history",
+        label: "History"
+    }
+];
 
 function getAppElement() {
     return document.getElementById("root");
