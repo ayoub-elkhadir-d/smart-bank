@@ -5,35 +5,27 @@ import { escapeHtml, formatCurrency, formatDate, getPageContent } from "./pageHe
 function renderDashboardPage() {
     const currentUser = getCurrentUser();
     const dashboard = getDashboardData(currentUser.id);
-    const activities = [];
 
-    for (let index = dashboard.recentActivities.length - 1; index >= 0; index -= 1) {
-        activities.push(dashboard.recentActivities[index]);
-    }
+    let activityRows = "";
+    const activities = dashboard.recentActivities;
 
-    let activityContent = "";
+    for (let index = activities.length - 1; index >= 0; index -= 1) {
+        const activity = activities[index];
 
-    if (activities.length === 0) {
-        activityContent = `<div class="empty-state"><strong>No activity yet</strong><p>Your account activity will appear here.</p></div>`;
-    } else {
-        let activityRows = "";
-
-        for (let index = 0; index < activities.length; index += 1) {
-            const activity = activities[index];
-
-            activityRows += `
-                <div class="activity-row">
-                    <div>
-                        <strong>${escapeHtml(activity.description)}</strong>
-                        <span>${escapeHtml(activity.action.replace(/_/g, " "))}</span>
-                    </div>
-                    <time>${formatDate(activity.createdAt)}</time>
+        activityRows += `
+            <div class="activity-row">
+                <div>
+                    <strong>${escapeHtml(activity.description)}</strong>
+                    <span>${escapeHtml(activity.action.replace(/_/g, " "))}</span>
                 </div>
-            `;
-        }
-
-        activityContent = `<div class="activity-list">${activityRows}</div>`;
+                <time>${formatDate(activity.createdAt)}</time>
+            </div>
+        `;
     }
+
+    const activityContent = activities.length === 0
+        ? `<div class="empty-state"><strong>No activity yet</strong><p>Your account activity will appear here.</p></div>`
+        : `<div class="activity-list">${activityRows}</div>`;
 
     getPageContent().innerHTML = `
         <div class="page-heading">
@@ -44,6 +36,7 @@ function renderDashboardPage() {
             </div>
             <a class="secondary-button" href="/credit" data-route>Run a simulation</a>
         </div>
+
         <div class="stat-grid">
             <article class="stat-card stat-card-primary">
                 <span class="stat-label">Available balance</span>
@@ -66,6 +59,7 @@ function renderDashboardPage() {
                 <span class="stat-detail">Available right now</span>
             </article>
         </div>
+
         <section class="content-section">
             <div class="section-heading">
                 <div>

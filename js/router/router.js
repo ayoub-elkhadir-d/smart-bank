@@ -33,144 +33,82 @@ const protectedPages = {
 };
 
 const navigationLinks = [
-    {
-        path: "/dashboard",
-        label: "Dashboard"
-    },
-    {
-        path: "/offers",
-        label: "Offers"
-    },
-    {
-        path: "/credit",
-        label: "Credit simulation"
-    },
-    {
-        path: "/rewards",
-        label: "Rewards"
-    },
-    {
-        path: "/flash-sales",
-        label: "Flash offers"
-    },
-    {
-        path: "/profile",
-        label: "Profile"
-    },
-    {
-        path: "/history",
-        label: "History"
-    }
+    { path: "/dashboard", label: "Dashboard" },
+    { path: "/offers", label: "Offers" },
+    { path: "/credit", label: "Credit simulation" },
+    { path: "/rewards", label: "Rewards" },
+    { path: "/flash-sales", label: "Flash offers" },
+    { path: "/profile", label: "Profile" },
+    { path: "/history", label: "History" }
 ];
 
-function getAppElement() {
-    return document.getElementById("root");
-}
-
-function renderPage(path) {
-    const appElement = getAppElement();
-
-    if (publicPages[path]) {
-        publicPages[path](appElement);
-        connectNavigationLinks();
-        return;
+document.addEventListener("click", (e) => {
+    const link = e.target.closest("a[data-route]");
+    if (link) {
+        e.preventDefault();
+        navigateTo(link.getAttribute("href"));
     }
 
-    renderProtectedPage(path);
-}
-
-function renderProtectedPage(path) {
-    const appElement = getAppElement();
-    const currentUser = get("currentUser");
-
-    const navbar = renderNavbar({
-        isAuthenticated: true,
-        currentPath: path,
-        userName: currentUser.firstName + " " + currentUser.lastName,
-        links: navigationLinks
-    });
-
-    appElement.innerHTML = `
-        <main class="protected-page">
-            ${navbar}
-            <section class="protected-card page-content"></section>
-        </main>
-    `;
-
-    const renderFunction = protectedPages[path];
-
-    if (renderFunction) {
-        renderFunction();
-    }
-
-    const logoutButton = document.getElementById("logout-button");
-
-    logoutButton.addEventListener("click", function () {
+    if (e.target.id === "logout-button") {
         const user = getCurrentUser();
-
-        if (user !== null) {
-            addHistory(user.id, "logout", "Logged out");
-        }
-
+        if (user) addHistory(user.id, "logout", "Logged out");
         logoutUser();
         navigateTo("/login");
-    });
-
-    connectNavigationLinks();
-}
-
-function connectNavigationLinks() {
-    const links = getAppElement().querySelectorAll("a[data-route]");
-
-    for (let index = 0; index < links.length; index += 1) {
-        links[index].addEventListener("click", function (event) {
-            event.preventDefault();
-
-            const path = links[index].getAttribute("href");
-            navigateTo(path);
-        });
     }
-}
+});
 
 function navigateTo(path) {
     window.history.replaceState({}, "", BASE_PATH + path);
     router();
 }
 
+function renderPage(path, isProtected) {
+    const app = document.getElementById("root");
+    const currentUser = get("currentUser");
+
+    if (!isProtected) {
+        publicPages[path](app);
+        return;
+    }
+
+    app.innerHTML = `
+    <main class="protected-page">
+      ${renderNavbar({
+        isAuthenticated: true,
+        currentPath: path,
+        userName: `${currentUser.firstName} ${currentUser.lastName}`,
+        links: navigationLinks
+    })}
+      <section class="protected-card page-content"></section>
+    </main>
+  `;
+
+
+    if (typeof protectedPages[path] === "function") {
+        protectedPages[path]();
+    }
+}
+
 function router() {
-    let path = window.location.pathname;
-
-    path = path.replace(BASE_PATH, "") || "/";
-
+    const path = window.location.pathname.replace(BASE_PATH, "") || "/";
     const currentUser = get("currentUser");
 
     if (path === "/") {
-        if (currentUser === null) {
-            navigateTo("/login");
-        } else {
-            navigateTo("/dashboard");
-        }
-        return;
+        return navigateTo(currentUser ? "/dashboard" : "/login");
     }
 
     if (publicPages[path]) {
-        if (currentUser !== null && path !== "/forgot-password") {
-            navigateTo("/dashboard");
-            return;
+        if (currentUser && path !== "/forgot-password") {
+            return navigateTo("/dashboard");
         }
-
-        renderPage(path);
-        return;
-    }
-
-    if (currentUser === null) {
-        navigateTo("/login");
-        return;
+        return renderPage(path, false);
     }
 
     if (protectedPages[path]) {
-        renderPage(path);
-        return;
+        if (!currentUser) {
+            return navigateTo("/login");
+        }
+        return renderPage(path, true);
     }
 
     navigateTo("/dashboard");
